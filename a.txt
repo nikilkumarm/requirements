@@ -38,3 +38,38 @@ demo = gr.Interface(
 )
 
 demo.launch()
+
+
+import gradio as gr
+import ollama
+from pypdf import PdfReader
+
+def summarize_pdf(pdf):
+    if pdf is None:
+        return "⚠ Please upload a PDF file first."
+
+    # Extract text from PDF
+    reader = PdfReader(pdf.name)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() + "\n"
+
+    # Create prompt for summarization
+    prompt = f"Summarize the following PDF content clearly and concisely:\n\n{text}"
+
+    # Get summary from Ollama model
+    response = ollama.chat(
+        model="qwen2.5:0.5b",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response["message"]["content"].strip()
+
+# Gradio UI
+gr.Interface(
+    fn=summarize_pdf,
+    inputs=gr.File(label="Upload PDF"),
+    outputs=gr.Textbox(label="Summary", lines=12),
+    title="📄 PDF Summarizer",
+    description="Upload any PDF file and get a quick summary of its content."
+).launch()
